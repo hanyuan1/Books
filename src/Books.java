@@ -98,6 +98,7 @@ public class Books {
 		   try {
 			  System.out.println("Wrtie SQL statements in one line:");
 			  stmt = conn.createStatement();
+			  scan.nextLine();
 			   String sql = scan.nextLine();
 			   ResultSet rs = stmt.executeQuery(sql);
 			  while(rs.next()){
@@ -157,7 +158,7 @@ public class Books {
 			   System.out.println("Inserting records into the table...");
 			   stmt = conn.createStatement();
 			   sql1 = "LOAD DATA LOCAL INFILE '/Users/hanyuanzhuang/Documents/workspace/Books/authors.txt' INTO TABLE AUTHORS " +
-					   "FIELDS TERMINATED BY '\t'" +
+					   "FIELDS TERMINATED BY ','" +
 					   "LINES TERMINATED BY '\n'";
 			   stmt.executeUpdate(sql1);
 			   System.out.println("Inserted records into the table...");

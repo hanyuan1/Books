@@ -1,0 +1,360 @@
+//STEP 1. Import required packages
+import java.sql.*;
+import java.util.Scanner;
+public class Books {
+	   // JDBC driver name and database URL
+	   static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";  
+	   static final String DB_URL = "jdbc:mysql://localhost";
+	   // Database credentials
+	   static final String USER = "root"; 
+	   static final String PASS = ""; 
+	   static Connection conn = null;
+	   static Statement stmt = null;
+	   static Scanner scan = null;
+	   
+	   public static Statement getStatement() {
+		   return stmt;
+	   }
+	   
+	   /** CHOICE: 1 **/
+	   // Method to connect to the Database
+	   public static void connectToDB() {
+			try{
+				   // Initialize the scanner
+				   scan = new Scanner(System.in);
+				   // STEP 2: Register JDBC driver
+				   Class.forName("com.mysql.jdbc.Driver");
+				   // STEP 3: Open a connection
+				   System.out.println("Connecting to database...");
+				   conn = DriverManager.getConnection(DB_URL, USER, PASS);
+				   System.out.println("Connected succesfully!");
+			} catch (SQLException e){
+				e.printStackTrace();
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+			}
+		}
+
+	   /** CHOICE: 2 **/
+	   // Show all existing databases
+	   public static void showDBs() {
+		   try{
+			   stmt = conn.createStatement();
+			   String sql = "SHOW DATABASES ";
+			   ResultSet rs = stmt.executeQuery(sql);
+			   System.out.println("** EXISITING DBs **");
+			   while(rs.next()){
+				   System.out.println(rs.getString(1));
+			   }
+			   System.out.println("** END OF DB LISTS **");
+			   rs.close();
+			   
+			   System.out.println();
+			   System.out.print("Which Database are you gonna use? Please type here:  ");
+			   String databaseName = scan.next();
+			   
+			   stmt.executeQuery("USE " + databaseName);
+			   System.out.println("Database changed");
+			   //in.nextLine(); 
+			   
+		   	} catch(SQLException se) {
+		   		//Handle errors for JDBC
+		   		se.printStackTrace();
+		   	} 
+	   }
+	   
+	   /** CHOICE: 3 **/
+	   // Method to create Database (here default to Books database)
+	   public static void createDB(String databaseName) {
+		   try{
+			   //STEP 4: Execute a query
+			   /**Create 'BOOKS' database*/
+			   System.out.println("Creating " + databaseName + " database...");
+			   stmt = conn.createStatement();
+			   String sql = "CREATE DATABASE " + databaseName;
+			   //If existing same named database, drop it, and create one more time.
+			   do {
+				   try {
+					   stmt.executeUpdate(sql);
+					   break;
+				   }catch(java.sql.SQLException e){
+					   stmt.executeUpdate("DROP DATABASE " + databaseName);
+				   }
+			   } while(true);
+			   System.out.println("Database created successfully!");   
+			   
+		   	} catch(SQLException se) {
+		   		//Handle errors for JDBC
+		   		se.printStackTrace();
+		   	} catch(Exception e) {
+		   		//Handle errors for Class.forName
+		   		e.printStackTrace();
+		   	} //end try
+		}	
+	   	
+	   /** CHOICE: 4 **/
+	   // Method to execute any statements the user typed
+	   public static void anyStatements() {
+		   try {
+			  System.out.println("Wrtie SQL statements in one line:");
+			  stmt = conn.createStatement();
+			   String sql = scan.nextLine();
+			   ResultSet rs = stmt.executeQuery(sql);
+			  while(rs.next()){
+				   try {
+					   int i = 1;
+					   while (true) {
+						   System.out.println(rs.getString(i) + "\t");
+						   i++;
+					   }
+				   } catch (SQLException e) {
+					   System.out.println();
+				   }
+			   }
+			   
+		   }catch(java.sql.SQLException e){  
+			  e.printStackTrace();
+		   } 
+	   	}
+
+	   /** CHOICE: 5 **/
+	   // Show all existing tables
+	   public static void showTables() {
+		   try{
+			   stmt = conn.createStatement();
+			   String sql = "SHOW TABLES ";
+			   ResultSet rs = stmt.executeQuery(sql);
+			   System.out.println("** EXISITING TABLES **");
+			   while(rs.next()){
+				   
+				   System.out.println(rs.getString(1));
+			   }
+			   System.out.println("** END OF DB LISTS **");
+			   
+		   	} catch(SQLException se) {
+		   		//Handle errors for JDBC
+		   		se.printStackTrace();
+		   	} 
+	   }
+	   
+	   /** CHOICE: 6 **/
+	   // Create AUTHORS table 
+	   public static void createAUTHORStable() {
+		   try {
+			   //System.out.println("Creating table AUTHORS in given database...");
+			   stmt = conn.createStatement();
+	      
+			   String sql1 = "CREATE TABLE AUTHORS " +
+	                   	"(authorID INTEGER NOT NULL AUTO_INCREMENT, " +
+	                   	" firstName CHAR(20), " + 
+	                   	" lastName CHAR(20), " + 
+	                   	" PRIMARY KEY ( authorID ))"; 
+
+			   stmt.executeUpdate(sql1);
+			   System.out.println("Created table AUTHORS in given database...");
+			   
+			   //Populate table AUTHORS
+			   System.out.println("Inserting records into the table...");
+			   stmt = conn.createStatement();
+			   sql1 = "LOAD DATA LOCAL INFILE '/Users/hanyuanzhuang/Documents/workspace/Books/authors.txt' INTO TABLE AUTHORS " +
+					   "FIELDS TERMINATED BY ','" +
+					   "LINES TERMINATED BY '\n'";
+			   stmt.executeUpdate(sql1);
+			   System.out.println("Inserted records into the table...");
+		   } catch(SQLException se){
+			   //Handle errors for JDBC
+			   //se.printStackTrace();
+			   dropTable("AUTHORS");
+		   }
+		   
+	   }
+
+	   /** CHOICE: 6 **/
+	   // Create AUTHORISBN table 
+	   public static void createAUTHORISBNtable() {
+		   try {
+			   //create table authorISBN
+			   //System.out.println("Creating table authorISBN in given database...");
+			   stmt = conn.createStatement();
+	      
+			   String sql2 = "CREATE TABLE AUTHORISBN " +
+					   "(authorID INTEGER NOT NULL REFERENCES AUTHORS(authorID), " +
+					   " isbn CHAR(10))"; 
+
+			   stmt.executeUpdate(sql2);
+			   System.out.println("Created table authorISBN in given database...");
+			  
+			   //Populate table AUTHOR_ISBN
+			   System.out.println("Inserting records into the table...");
+			   stmt = conn.createStatement();
+			   sql2 = "LOAD DATA LOCAL INFILE '/Users/hanyuanzhuang/Documents/workspace/Books/authorISBN.txt' INTO TABLE AUTHORISBN " +
+					   "FIELDS TERMINATED BY '\t'" + "LINES TERMINATED BY '\n'";
+			   stmt.executeUpdate(sql2);
+			   System.out.println("Inserted records into the table...");
+		   } catch(SQLException se){
+			   //Handle errors for JDBC
+			   //se.printStackTrace();
+			   dropTable("AUTHORISBN");
+		   }
+		   
+	   }
+	   
+	   /** CHOICE: 6 **/
+	   // Create PUBLISHERS table
+	   public static void createPUBLISHERStable() {
+		   
+			try{
+				   //create table publishers
+				   //System.out.println("Creating table publishers in given database...");
+				   stmt = conn.createStatement();
+		      
+				   String sql4 = "CREATE TABLE PUBLISHERS " +
+		                   "(publisherID INTEGER NOT NULL AUTO_INCREMENT, " +
+		                   " publisherName CHAR(100), " + 
+		                   " PRIMARY KEY ( publisherID ))"; 
+
+				   stmt.executeUpdate(sql4);
+				   System.out.println("Created table publishers in given database...");
+				   
+				   //Populate table PUBLISHERS
+				   System.out.println("Inserting records into the table...");
+				   stmt = conn.createStatement();
+				   sql4 = "LOAD DATA LOCAL INFILE INTO TABLE PUBLISHERS " +
+						   "FIELDS TERMINATED BY '\t'" +
+						   "LINES TERMINATED BY '\n'";
+				   stmt.executeUpdate(sql4);
+				   System.out.println("Inserted records into the table...");
+				   
+			   } catch (SQLException e) {
+				   // e.printStackTrace();
+				   dropTable("PUBLISHERS");
+			   }
+		}
+	   
+	   /** CHOICE: 6 **/
+	   // Create TITLES table
+	   public static void createTITLEStable() {
+		   try {
+			   //create table titles
+			   stmt = conn.createStatement();
+	      
+			   String sql3 = "CREATE TABLE TITLES " +
+					   "(isbn CHAR(10) NOT NULL, " +
+	                   " title VARCHAR(500), " + 
+	                   " editionNumber INTEGER, " + 
+	                   " copyright CHAR(4), "+
+	                   " publisherID INTEGER REFERENCES PUBLISHERS(publisherID), "+
+	                   " price FLOAT(8,2), "+
+	                   " PRIMARY KEY ( isbn ))";
+
+			   stmt.executeUpdate(sql3);
+			   System.out.println("Created table Titles in given database...");
+			   //Populate table TITLES
+			   System.out.println("Inserting records into the table...");
+			   stmt = conn.createStatement();
+			   sql3 = "LOAD DATA LOCAL INFILE INTO TABLE TITLES " +
+					   "FIELDS TERMINATED BY '\t'" +
+					   "LINES TERMINATED BY '\n'";
+			   stmt.executeUpdate(sql3);
+			   System.out.println("Inserted records into the table...");
+		   } catch (SQLException e ) {
+			   e.printStackTrace();
+			   dropTable("TITLES");
+		   }
+	   }
+	   
+	   /** CHOICE: 7 **/
+	   // Method to drop a table
+	   public static void dropTable(String tablename) {
+		   try {
+			   stmt = conn.createStatement();
+			   String sql = "DROP TABLE IF EXISTS " + tablename;
+			   stmt.executeUpdate(sql);
+		   } catch (SQLException e) {
+			   e.printStackTrace();
+		   }
+	   }
+		   
+	   /** CHOICE: 8 **/
+	   public static void printOut() {
+		   try {
+			   System.out.print("Table name: ");
+			   String tableName = scan.next();
+			   String sql = "SELECT * FROM " + tableName;
+			   ResultSet rs = stmt.executeQuery(sql);
+			   if (tableName.equals("authors") ) {
+				   System.out.println("authorID\tfirstName\tlastName");
+			   } else if (tableName.equals("authorisbn")){
+				   System.out.println("authorID\tisbn");
+			   } else if (tableName.equals("publishers")){
+				   System.out.println("publisherID\tpublisherName");
+			   } else if (tableName.equals("titles")){
+				   System.out.println("isbn\ttitle\teditionNumber\tcopyright\tpublisherID\tprice");
+			   }
+			  
+			   while(rs.next()){
+				   try {
+					   int i = 1;
+					   while (true) {
+						   System.out.println(rs.getString(i) + "\t");
+						   i++;
+					   }
+				   } catch (SQLException e) {
+					   System.out.println();
+				   }
+			   }
+			   rs.close();
+		   } catch (SQLException e) {
+			   e.printStackTrace();
+		   }
+	   }
+	   
+	   /** CHOICE: 9 **/
+	   public static void insert() {
+		   try {
+			   System.out.println("Please write a INSERT SQL statement");
+			   System.out.println("e.g. INSERT INTO AUTHORS(firstName,lastName) " + "VALUES ('pppp', 'p')");
+			   scan.nextLine();
+			   String sql2 = scan.nextLine();
+			   stmt.executeUpdate(sql2);
+			   System.out.println("Inserted records into the table...");
+		   } catch (SQLException e) {
+			   e.printStackTrace();
+		   }
+	   }
+	   
+	   /** CHOICE: 10 **/
+	   public static void update() {
+		   try {
+			   //Edit/Update the existing information about an author
+			   System.out.println("Please write a UPDATE SQL statement");
+			   System.out.println("e.g. UPDATE AUTHORS " + "SET firstName = 'updatedAuthor' WHERE lastName = 'p'");
+			   scan.nextLine();
+			   String sql3 = scan.nextLine();
+			   
+			   stmt.executeUpdate(sql3);
+			   System.out.println("Updated records into the table...");
+		   } catch (SQLException e) {
+			   e.printStackTrace();
+		   }
+	   }
+	   
+	   /** CHOICE: 11 **/
+	   public static void delete() {
+		   
+	   }
+	   
+	   public static void close() {
+		   	// close resources
+	   		try{
+	   			if(stmt!=null)
+	   				stmt.close();
+	   			if(conn!=null)
+	   				conn.close();
+	   			System.out.println("All the resources closed. Ready to exit the program!");
+	   		} catch(SQLException se) {
+	   			se.printStackTrace();
+	   		}
+	   }   
+	   
+} //end Books
